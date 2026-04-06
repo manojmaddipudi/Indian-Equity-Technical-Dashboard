@@ -48,7 +48,33 @@ Standard EMAs weight absolute price changes equally. Logarithmic EMAs weight per
 
 ## Usage
 
-### Running the Dashboard
+### Option 1: Interactive Web Dashboard (Recommended)
+
+Start the Flask web server for an interactive dashboard:
+
+```bash
+python app.py
+```
+
+Then open your browser to: **http://localhost:5000**
+
+**Features:**
+- 🔄 **Refresh Data**: Click "Refresh Data" button to fetch latest prices without restarting
+- ✏️ **Edit Watchlist**: Add or remove tickers directly from the browser
+  - Click "Edit Watchlist" to open the editor
+  - Add ticker: Enter in `SYMBOL.NS` format (e.g., `RELIANCE.NS`)
+  - Remove ticker: Click "❌ Remove" next to any ticker
+  - Changes save automatically to `watchlist.json`
+- 📊 **Real-Time Updates**: Dashboard updates without page reload
+- 🎨 **Clean UI**: Color-coded status indicators with responsive design
+
+**Runtime**: Initial load ~10-15 seconds, refresh ~10-15 seconds per request
+
+**Stopping the Server**: Press `Ctrl+C` in the terminal
+
+### Option 2: CLI Mode (Static HTML)
+
+Run the command-line version for terminal output + static HTML:
 
 ```bash
 python main.py
@@ -62,9 +88,7 @@ This will:
 
 **Runtime**: Approximately 10-15 seconds for 7 tickers
 
-### Viewing the HTML Dashboard
-
-After running `main.py`, open the dashboard in your browser:
+**Viewing the Static Dashboard:**
 
 **Windows:**
 ```bash
@@ -83,17 +107,14 @@ xdg-open dashboard.html
 
 Or simply double-click `dashboard.html` in File Explorer.
 
-The dashboard features:
-- 📊 **Summary Statistics**: Stock counts by status (ABOVE/NEAR/BREACH)
-- 📈 **EMA Table**: Current prices, EMAs, and distance from 40W EMA
-- 🎯 **Support/Resistance**: Key levels and proximity to 52-week high
-- 🎨 **Color Coding**: Red (breach), amber (near), green (above) indicators
-- 📱 **Responsive Design**: Works on desktop and mobile browsers
-
-**Refreshing Data**: Simply run `python main.py` again - the HTML file will be regenerated with latest data.
-
 ### Customizing the Watchlist
 
+**Interactive Mode (app.py):**
+- Click "Edit Watchlist" button in the dashboard
+- Changes persist to `watchlist.json` automatically
+- On first run, creates `watchlist.json` from `config.py`
+
+**CLI Mode (main.py):**
 Edit `config.py` and modify the `WATCHLIST` variable:
 
 ```python
@@ -105,6 +126,9 @@ WATCHLIST = [
 ```
 
 Use Yahoo Finance ticker format: `SYMBOL.NS` for NSE stocks.
+
+**Resetting Watchlist:**
+Delete `watchlist.json` to recreate from `config.py` on next run.
 
 ## Output Explained
 
@@ -171,6 +195,13 @@ price_ema = np.exp(log_ema)
 - [x] HTML dashboard output (`dashboard.html`)
 - [x] Responsive web design with color-coded status
 - [x] Summary statistics and legend
+
+### Phase 2.5 (Completed ✅)
+- [x] Interactive web dashboard with Flask server
+- [x] Real-time data refresh from browser
+- [x] Watchlist editor (add/remove tickers via UI)
+- [x] JSON-based watchlist persistence
+- [x] Backward compatibility with CLI mode
 
 ### Phase 3 (Planned)
 - [ ] Telegram bot for 40W EMA crossover alerts

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Equity Technical Dashboard - Interactive</title>
+    <style>
+        :root {
+            --breach-red: #dc3545;
+            --near-amber: #ffc107;
+            --above-green: #28a745;
+            --bg-light: #f8f9fa;
+            --text-dark: #212529;
+            --border-gray: #dee2e6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-gray);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        header p {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+
+        /* Control buttons section */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--bg-light);
+            border-radius: 6px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #545b62;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: #218838;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.85em;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        /* Status message */
+        .status-message {
+            display: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-weight: 600;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #6c757d;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .add-ticker-form {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .add-ticker-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid var(--border-gray);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .current-watchlist {
+            margin-top: 30px;
+        }
+
+        .current-watchlist h3 {
+            margin-bottom: 15px;
+            color: var(--text-dark);
+        }
+
+        #watchlistItems {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #watchlistItems li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        #watchlistItems li:hover {
+            background-color: var(--bg-light);
+        }
+
+        .ticker-name {
+            font-weight: 600;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            text-align: center;
+            padding-top: 20%;
+        }
+
+        .spinner-icon {
+            font-size: 4em;
+            animation: spin 2s linear infinite;
+        }
+
+        .spinner p {
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .summary-stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            padding: 15px 25px;
+            border-radius: 6px;
+            background: var(--bg-light);
+            font-weight: 600;
+            font-size: 1.1rem;
+            border: 2px solid var(--border-gray);
+        }
+
+        .stat.breach {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-color: var(--breach-red);
+            color: var(--breach-red);
+        }
+
+        .stat.near {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-color: var(--near-amber);
+            color: #856404;
+        }
+
+        .stat.above {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-color: var(--above-green);
+            color: var(--above-green);
+        }
+
+        section {
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-dark);
+            border-left: 4px solid var(--above-green);
+            padding-left: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        thead {
+            background-color: #343a40;
+            color: white;
+        }
+
+        thead th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--border-gray);
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+
+        tbody td {
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .ticker {
+            font-weight: bold;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .status-red {
+            background-color: rgba(220, 53, 69, 0.05);
+        }
+
+        .status-amber {
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+
+        .status-green {
+            background-color: rgba(40, 167, 69, 0.05);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85em;
+            display: inline-block;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .badge.red {
+            background-color: var(--breach-red);
+            color: white;
+        }
+
+        .badge.amber {
+            background-color: var(--near-amber);
+            color: #000;
+        }
+
+        .badge.green {
+            background-color: var(--above-green);
+            color: white;
+        }
+
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border-gray);
+        }
+
+        footer h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        footer ul {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+
+        footer li {
+            padding: 8px 0;
+        }
+
+        footer p {
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        .failed-tickers {
+            color: #dc3545;
+            display: block;
+        }
+
+        .overflow-wrapper {
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            .summary-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .stat {
+                text-align: center;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            tbody td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 Indian Equity Technical Dashboard</h1>
+            <p><strong>Last Updated:</strong> {{ timestamp }}</p>
+            <p><strong>Data Source:</strong> Weekly OHLC (NSE via Yahoo Finance)</p>
+            <p><strong>Methodology:</strong> Logarithmic EMAs (Weinstein/Minervini)</p>
+        </header>
+
+        <!-- Control buttons section -->
+        <section class="controls">
+            <div class="control-buttons">
+                <button id="refreshBtn" class="btn btn-primary">
+                    <span>🔄</span> Refresh Data
+                </button>
+                <button id="editWatchlistBtn" class="btn btn-secondary">
+                    <span>✏️</span> Edit Watchlist
+                </button>
+            </div>
+            <div id="statusMessage" class="status-message"></div>
+        </section>
+
+        <section class="summary-stats">
+            <div class="stat">{{ total_stocks }} Stocks Analyzed</div>
+            <div class="stat breach">{{ breach_count }} BREACH 🔴</div>
+            <div class="stat near">{{ near_count }} NEAR 🟡</div>
+            <div class="stat above">{{ above_count }} ABOVE 🟢</div>
+        </section>
+
+        <section class="ema-table">
+            <h2>EMA Summary</h2>
+            <div class="overflow-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Price</th>
+                            <th>10W EMA</th>
+                            <th>20W EMA</th>
+                            <th>40W EMA</th>
+                            <th>Status</th>
+                            <th>Dist %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in summaries %}
+                        <tr class="status-{{ s.status.color }}">
+                            <td class="ticker">{{ s.ticker }}</td>
+                            <td>₹{{ "%.2f"|format(s.current_price) }}</td>
+                            <td>₹{{ "%.2f"|format(s.emas['10W']) }}</td>
+                            <td>₹{{ "%.2f"|format(s.emas['20W']) }}</td>
+                            <td>₹{{ "%.2f"|format(s.emas['40W']) }}</td>
+                            <td><span class="badge {{ s.status.color }}">{{ s.status.signal }}</span></td>
+                            <td>{{ "%+.1f"|format(s.status.distance_pct) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="sr-table">
+            <h2>Support/Resistance Levels</h2>
+            <div class="overflow-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>52W High</th>
+                            <th>52W Low</th>
+                            <th>4W Pivot High</th>
+                            <th>4W Pivot Low</th>
+                            <th>vs 52W High</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in summaries %}
+                        <tr>
+                            <td class="ticker">{{ s.ticker }}</td>
+                            <td>₹{{ "%.2f"|format(s.support_resistance['52w_high']) }}</td>
+                            <td>₹{{ "%.2f"|format(s.support_resistance['52w_low']) }}</td>
+                            <td>₹{{ "%.2f"|format(s.support_resistance['pivot_high']) }}</td>
+                            <td>₹{{ "%.2f"|format(s.support_resistance['pivot_low']) }}</td>
+                            <td>{{ "%.1f"|format(s.vs_52w_high_pct) }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>
+            <h3>Legend</h3>
+            <ul>
+                <li><span class="badge green">ABOVE 🟢</span> : Price > 3% above 40W EMA (safe zone, maintain position)</li>
+                <li><span class="badge amber">NEAR 🟡</span> : Price within 3% of 40W EMA (caution zone, monitor closely)</li>
+                <li><span class="badge red">BREACH 🔴</span> : Price below 40W EMA (<strong>EXIT SIGNAL</strong>)</li>
+            </ul>
+            <p><strong>Note:</strong> EMAs are calculated on logarithmic scale for percentage-based consistency (Weinstein/Minervini methodology)</p>
+            <p><strong>Data:</strong> Weekly OHLC includes current week's intraday prices for real-time analysis</p>
+            {% if failed_tickers %}
+            <p class="failed-tickers"><strong>⚠️ Failed tickers:</strong> {{ failed_tickers|join(', ') }}</p>
+            {% endif %}
+        </footer>
+    </div>
+
+    <!-- Watchlist editor modal -->
+    <div id="watchlistModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Watchlist</h2>
+
+            <!-- Add ticker form -->
+            <div class="add-ticker-form">
+                <input type="text" id="newTickerInput" placeholder="Enter ticker (e.g., RELIANCE.NS)" />
+                <button id="addTickerBtn" class="btn btn-success">Add Ticker</button>
+            </div>
+
+            <!-- Current watchlist with delete buttons -->
+            <div class="current-watchlist">
+                <h3>Current Watchlist ({{ watchlist|length }} tickers)</h3>
+                <ul id="watchlistItems">
+                    {% for ticker in watchlist %}
+                    <li data-ticker="{{ ticker }}">
+                        <span class="ticker-name">{{ ticker }}</span>
+                        <button class="btn-delete" data-ticker="{{ ticker }}">❌ Remove</button>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading spinner -->
+    <div id="loadingSpinner" class="spinner">
+        <div class="spinner-icon">⏳</div>
+        <p>Fetching latest data... This may take 10-15 seconds</p>
+    </div>
+
+    <!-- Load JavaScript -->
+    <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+</body>
+</html>
