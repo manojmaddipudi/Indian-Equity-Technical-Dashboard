@@ -127,10 +127,10 @@ def refresh_data():
 
 if __name__ == '__main__':
     print("\n" + "="*80)
-    print("🚀 Indian Equity Technical Dashboard - Interactive Mode")
+    print("Indian Equity Technical Dashboard - Interactive Mode")
     print("="*80)
-    print("\n📊 Server starting at: http://localhost:5000")
-    print("🔄 Features: Real-time refresh, Watchlist editor")
-    print("⏹️  Press Ctrl+C to stop the server\n")
+    print("\nServer starting at: http://localhost:5000")
+    print("Features: Real-time refresh, Watchlist editor")
+    print("Press Ctrl+C to stop the server\n")
 
     app.run(debug=True, host='0.0.0.0', port=5000)
